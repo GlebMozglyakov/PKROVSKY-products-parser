@@ -1,9 +1,9 @@
-from tkinter.font import names
-
 import requests
 from bs4 import BeautifulSoup
 from schemas import ProductBase
 import json
+from database import create_product
+from sqlalchemy.orm import Session
 
 
 def fetch_page(url):
@@ -61,6 +61,17 @@ def parse_products_from_cur_page(html):
     return products, pydantic_products
 
 
+def write_products_to_json(all_products):
+    with open('data/products.json', 'w', encoding='utf-8') as file:
+        json.dump(all_products, file, ensure_ascii=False, indent=4)
+
+
+def write_products_to_db(db: Session, parsed_products):
+    # Проход по страницам и сохранение в базу
+    for product in parsed_products:
+        create_product(db, brand=product["brand"], name=product["name"], price=product["price"])
+
+
 def get_all_products():
     """
     Проходимся по всем страницам в новинках
@@ -87,21 +98,23 @@ def get_all_products():
         all_pydantic_products.extend(pydantic_products)
         page_number += 1
 
+    print(len(all_products))
+
     # Записываем товары в json
-    with open('data/products.json', 'w', encoding='utf-8') as file:
-        json.dump(all_products, file, ensure_ascii=False, indent=4)
+    # write_products_to_json(all_products)
+    # write_products_to_db(db, all_products)
 
     return all_products, all_pydantic_products
 
 
 # Запуск парсера
-products, pydantic_products = get_all_products()
+# products, pydantic_products = get_all_products()
 
 # Вывод собранных данных
 # for product in products:
 #     print(f"Название: {product['name']}, Бренд: {product['brand']}, Цена: {product['price']}")
 
-print(f"len {len(pydantic_products)}")
-
-for product in pydantic_products:
-    print(product)
+# print(f"len {len(pydantic_products)}")
+#
+# for product in pydantic_products:
+#     print(product)
