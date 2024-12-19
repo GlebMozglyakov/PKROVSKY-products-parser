@@ -24,27 +24,48 @@ Base.metadata.create_all(bind=engine)
 
 # Работа с продуктами
 def create_product(db: Session, brand: str, name: str, price: int):
+    # Проверка, существует ли продукт с таким же брендом, названием, ценой
+    existing_product = db.query(Product).filter_by(brand=brand, name=name, price=price).first()
+
+    # Если продукт уже существует, то не записываем его в базу второй раз
+    if existing_product:
+        print(f"Продукт {name} бренда {brand}  с ценой {price} уже существует в базе данных.")
+        return existing_product
+
     db_product = Product(brand=brand, name=name, price=price)
     db.add(db_product)
     db.commit()
     db.refresh(db_product)
     return db_product
 
-def get_products(db: Session, skip: int = 0, limit: int = 10):
-    return db.query(Product).offset(skip).limit(limit).all()
-
-def update_product(db: Session, product_id: int, name: str = None, price: int = None):
+def get_product_by_id(db: Session, product_id: int):
     product = db.query(Product).filter(Product.id == product_id).first()
-    if name:
-        product.name = name
-    if price:
-        product.price = price
-    db.commit()
-    db.refresh(product)
-    return product
+
+    if product:
+        return product
+    else:
+        return None
+
+def update_product(db: Session, product_id: int, name: str = None, price: int = None, brand: str = None):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if product:
+        if name:
+            product.name = name
+        if price:
+            product.price = price
+        if brand:
+            product.brand = brand
+
+        db.commit()
+        db.refresh(product)
+        return product
+    else:
+        return None
 
 def delete_product(db: Session, product_id: int):
     product = db.query(Product).filter(Product.id == product_id).first()
     if product:
         db.delete(product)
         db.commit()
+        return "Продукт удален"
+    return None
