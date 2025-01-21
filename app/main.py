@@ -40,7 +40,7 @@ async def create_product_route(brand: str, name: str, price: int, db: Session = 
 
     if product:
         # Отправка уведомления через WebSocket
-        await manager.send_message(f"Создан новый продукт: {product['name']} - {product['price']}₽")
+        await manager.send_message(f"Создан новый продукт: {name}, бренд: {brand}, цена: {price}₽")
         return product
 
     raise HTTPException(status_code=400, detail="Ошибка при создании продукта.")
